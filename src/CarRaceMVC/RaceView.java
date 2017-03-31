@@ -65,18 +65,20 @@ public class RaceView extends View
 	private ArrayList<String> 	songs;
 	private ArrayList<String> 	users;
 	
-	public RaceView(ClientController c, String title, int song ,ArrayList<Car> carInfo ) {
+
+	public RaceView(ClientController c,String title,int song, ArrayList<Car> carInfo) {
 		super(c);
-		cars = new ArrayList<>();
+		this.cars = carInfo;
 		prepareMe();
 		//Close the timer, if it exists
 		this.setOnCloseRequest((event) -> {
 			if (rotateTimer != null )
 				rotateTimer.cancel();
 		});
-		
-		//this.cars = carInfo;
+
+		setTitle(title);
 		this.open();
+		this.show();
 	}
 
 	
@@ -105,10 +107,12 @@ public class RaceView extends View
 		//CAR
 		
 		//DEBUG
+    /*
 		cars.add(new Car(0, manufacture.JAGUAR.ordinal(), null, Color.AQUAMARINE, size.REGULAR.ordinal(), 0, carType.JEEP.ordinal()));
 		cars.add(new Car(0, manufacture.MERC.ordinal(), null, Color.BLUE, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));
 		cars.add(new Car(0, manufacture.NISSAN.ordinal(), null, Color.RED, size.REGULAR.ordinal(), 0, carType.SALOON.ordinal()));
 		cars.add(new Car(0, manufacture.SUSITA.ordinal(), null, Color.GREEN, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));		
+  */
 		
 		buildCars();
 	}
