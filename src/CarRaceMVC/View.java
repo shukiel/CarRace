@@ -50,7 +50,7 @@ public abstract class View extends Stage {
 	}
 
 	public void open() {
-		scene = new Scene(pane, W, H);
+		scene = new Scene(pane, W, H, true );
 		this.setScene(scene);
 	}
 

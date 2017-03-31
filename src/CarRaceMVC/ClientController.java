@@ -244,6 +244,7 @@ public class ClientController {
 			windows.add(new LoginView(this));
 			break;
 		case "race":
+
 			windows.add(new RaceView(this,title,songNum,raceCars));
 		}
 		
