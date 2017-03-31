@@ -67,6 +67,7 @@ public class CarModel extends Xform
 		setTextures();
 		initCarParam();
 		buildCar();
+		System.out.println(com.sun.javafx.runtime.VersionInfo.getRuntimeVersion());
 		this.setRotateY(90);
 	}
 
@@ -426,7 +427,7 @@ public class CarModel extends Xform
 				wheels.add (new Wheel(wheelDiameter/2, wheelWidth,false));
 				
 				
-				
+				/*
 				//Set Wheel rotation TODO:: Sometime one wheel stops
 				rotateTimer = new Timer();
 				rotateTimer.scheduleAtFixedRate(new TimerTask() {
@@ -440,6 +441,9 @@ public class CarModel extends Xform
 						}
 					}
 				}, 100, (long) (100/(speed)));
+				*/
+				
+				
 				
 				//Move Wheels to place
 				wheels.get(0).setTranslate(-bodyWidth/2 , wheelDiameter/2, 0.7f * (bodyLength/2 + hoodLength/2));
@@ -449,11 +453,12 @@ public class CarModel extends Xform
 				wheels.get(3).setTranslate( bodyWidth/2 , wheelDiameter/2, -0.4f * (bodyLength/2 + hoodLength/2));
 				
 				//Create Axles
-				Cylinder frontCylinder = new Cylinder(0.05, bodyWidth);
-				Cylinder rearCylinder = new Cylinder(0.05, bodyWidth);
+				Cylinder frontCylinder = new Cylinder(0.5, bodyWidth);
+				Cylinder rearCylinder = new Cylinder(0.5, bodyWidth);
 				PhongMaterial cylinderMat = new PhongMaterial();
 				cylinderMat.setDiffuseColor(Color.BLACK);
-				
+				cylinderMat.setSpecularColor(Color.BLACK);
+
 				frontCylinder.setMaterial(cylinderMat);
 				rearCylinder.setMaterial(cylinderMat);
 				
@@ -464,6 +469,9 @@ public class CarModel extends Xform
 				
 				frontCylinder.setTranslateY(wheelDiameter/2);
 				rearCylinder.setTranslateY(wheelDiameter/2);
+				this.getChildren().add(frontCylinder);
+				this.getChildren().add(rearCylinder);
+				
 		//Create the MeshViews
 	
 		HashMap<String, MeshView> meshViewMap = new HashMap<>();
@@ -489,7 +497,7 @@ public class CarModel extends Xform
 		PhongMaterial frontWindowMat = new PhongMaterial();
 		frontWindowMat.setDiffuseMap(frontWindowImg);
 		
-		
+
 		//Edit the specific components parameters
 		meshViewMap.get("frontWindow").setMaterial(frontWindowMat);
 		
@@ -507,8 +515,6 @@ public class CarModel extends Xform
 		{
 			this.getChildren().add(w);
 		}
-		
-		this.getChildren().addAll(frontCylinder, rearCylinder);
 		
 	}
 	

@@ -32,6 +32,13 @@ public class Car implements Defines {
 	}
 
 	private int id;
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+
 	private manufacture model_id;
 	private carType type;
 	public carType getType() {

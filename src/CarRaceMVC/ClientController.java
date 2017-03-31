@@ -215,7 +215,7 @@ public class ClientController {
 			windows.add(new LoginView(this));
 			break;
 		case "race":
-			windows.add(new RaceView(this, null)); //TODO:: SEND CAR LIST
+			windows.add(new RaceView(this,"Test", 1, null)); //TODO:: SEND CAR LIST
 		}
 
 		windows.get(windows.size() - 1).show();

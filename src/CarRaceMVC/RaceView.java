@@ -12,6 +12,7 @@ import javafx.scene.paint.ImagePattern;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.CullFace;
@@ -19,6 +20,7 @@ import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Sphere;
 import javafx.scene.AmbientLight;
+import javafx.scene.DepthTest;
 import JavaFX_3D.Xform;
 import CarRaceMVC.Defines.*;
 
@@ -40,29 +42,32 @@ public class RaceView extends View
 
 	
 	//Timer
-	Timer rotateTimer;
+	private Timer rotateTimer;
 	
 	//Keyboard and mouse params
-    double mousePosX;
-    double mousePosY;
-    double mouseOldX;
-    double mouseOldY;
-    double mouseDeltaX;
-    double mouseDeltaY;
+    private double mousePosX;
+    private double mousePosY;
+    private  double mouseOldX;
+    private  double mouseOldY;
+    private  double mouseDeltaX;
+    private  double mouseDeltaY;
 
 	
-	
+	private Xform ThreeDPane;
 	
 	private PerspectiveCamera camera;
 	private Xform cameraXform;
 
+	private View betView;
+	
 	private ArrayList<Car> 		cars;
 	private ArrayList<Integer> 	raceID;
 	private ArrayList<String> 	songs;
 	private ArrayList<String> 	users;
 	
-	public RaceView(ClientController c, ArrayList<Car> carInfo) {
+	public RaceView(ClientController c, String title, int song ,ArrayList<Car> carInfo ) {
 		super(c);
+		cars = new ArrayList<>();
 		prepareMe();
 		//Close the timer, if it exists
 		this.setOnCloseRequest((event) -> {
@@ -70,7 +75,7 @@ public class RaceView extends View
 				rotateTimer.cancel();
 		});
 		
-		this.cars = carInfo;
+		//this.cars = carInfo;
 		this.open();
 	}
 
@@ -83,7 +88,9 @@ public class RaceView extends View
 		this.H = 1000;
 
 		pane = new Xform();
-		
+		ThreeDPane = new Xform();
+		pane.setDepthTest(DepthTest.ENABLE);
+
 		buildCamera();
 		
 		//Set Materials
@@ -101,16 +108,12 @@ public class RaceView extends View
 		cars.add(new Car(0, manufacture.JAGUAR.ordinal(), null, Color.AQUAMARINE, size.REGULAR.ordinal(), 0, carType.JEEP.ordinal()));
 		cars.add(new Car(0, manufacture.MERC.ordinal(), null, Color.BLUE, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));
 		cars.add(new Car(0, manufacture.NISSAN.ordinal(), null, Color.RED, size.REGULAR.ordinal(), 0, carType.SALOON.ordinal()));
-		cars.add(new Car(0, manufacture.SUSITA.ordinal(), null, Color.GREEN, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));
-
-		//END DEBUG
-		
+		cars.add(new Car(0, manufacture.SUSITA.ordinal(), null, Color.GREEN, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));		
 		
 		buildCars();
-		
-	//	buildAxis();
-		
 	}
+
+
 
 
 	/**
@@ -145,7 +148,7 @@ public class RaceView extends View
 			cm.setTranslateY(0);
 
 			currentCarLocation += CAR_SPACE;
-			((Xform)pane).getChildren().add(cm);
+			ThreeDPane.getChildren().add(cm);
 		}
 	}
 
@@ -165,7 +168,7 @@ public class RaceView extends View
 		cameraXform = new Xform();
 		cameraXform.getChildren().add(camera);
 		
-		((Group)pane).getChildren().add(cameraXform);
+		ThreeDPane.getChildren().add(cameraXform);
 		
 		
 		/*
@@ -187,11 +190,19 @@ public class RaceView extends View
 	public void open()
 	{
 		super.open();
+		((Group)pane).getChildren().add(ThreeDPane);
 		scene.setFill(Color.WHITE);
 		scene.setCamera(camera);
+		String [] carNames = new String[5];
 		
+		for(int i=0;i<5;i++)
+		{
+			carNames[i] = Integer.toString(cars.get(i).getId()) + cars.get(i).getModel_id().toString() ;
+		}
+		
+		betView = new BetView(cont, carNames, this.getTitle());
 		handleMouse();
-	}
+	}	
 	
 	private void handleMouse() {
 		 
@@ -258,13 +269,13 @@ public class RaceView extends View
         
         Group axisGroup  = new Group();
         axisGroup.getChildren().addAll(xAxis, yAxis, zAxis);
-        ((Group)pane).getChildren().addAll(axisGroup);
+        ThreeDPane.getChildren().addAll(axisGroup);
 	}
 	
 	private void buildStadium()
 	{
 		//Set Shapes
-		Box floor = new Box(1000, 1, 1000);
+		Box floor = new Box(1000, 1000, 1000);
 		
 		Sphere sky = new Sphere(10000);
 		
@@ -298,7 +309,6 @@ public class RaceView extends View
 		walls.setMaterial(wallMat);
 		
 		
-        ((Xform)pane).getChildren().add(floor);
-        
+        ThreeDPane.getChildren().add(floor);
 	}
 }
