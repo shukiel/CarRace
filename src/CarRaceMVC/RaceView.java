@@ -30,10 +30,14 @@ public class RaceView extends View
 	private static final double ZOOM_SENSTIVTY = 100.f;
 	
 	//Camera default parameters
-	private static final double CAMERA_INITIAL_DISTANCE = -2000;
+	private static final double CAMERA_INITIAL_DISTANCE = -200;
 	private static final double CAMERA_NEAR_CLIP		= 0.1;
 	private static final double CAMERA_FAR_CLIP 		= 10000.0;
 	//End camera params
+	
+	//MISC CAR_RACE CONSTANTS
+	private static final double CAR_SPACE = 20;
+
 	
 	//Timer
 	Timer rotateTimer;
@@ -57,7 +61,7 @@ public class RaceView extends View
 	private ArrayList<String> 	songs;
 	private ArrayList<String> 	users;
 	
-	public RaceView(ClientController c) {
+	public RaceView(ClientController c, ArrayList<Car> carInfo) {
 		super(c);
 		prepareMe();
 		//Close the timer, if it exists
@@ -65,6 +69,8 @@ public class RaceView extends View
 			if (rotateTimer != null )
 				rotateTimer.cancel();
 		});
+		
+		this.cars = carInfo;
 		this.open();
 	}
 
@@ -86,13 +92,23 @@ public class RaceView extends View
 		white.setDiffuseColor(Color.DARKRED);
 		
 		//Set Lighting
-        setLighting();
+        //setLighting();
 		//Stadium
 		buildStadium();
 		//CAR
+		
+		//DEBUG
+		cars.add(new Car(0, manufacture.JAGUAR.ordinal(), null, Color.AQUAMARINE, size.REGULAR.ordinal(), 0, carType.JEEP.ordinal()));
+		cars.add(new Car(0, manufacture.MERC.ordinal(), null, Color.BLUE, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));
+		cars.add(new Car(0, manufacture.NISSAN.ordinal(), null, Color.RED, size.REGULAR.ordinal(), 0, carType.SALOON.ordinal()));
+		cars.add(new Car(0, manufacture.SUSITA.ordinal(), null, Color.GREEN, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));
+
+		//END DEBUG
+		
+		
 		buildCars();
 		
-		buildAxis();
+	//	buildAxis();
 		
 	}
 
@@ -115,15 +131,22 @@ public class RaceView extends View
 	 * 
 	 */
 	private void buildCars() {
-		CarModel cm = new CarModel(carType.SPORT, size.MINI,manufacture.NISSAN,Color.BLUE);
+		double currentCarLocation = 0.f;
+		for (Car c : cars)
+		{
+			CarModel cm = new CarModel(c.getType(), c.getCarSize(),c.getModel_id(),c.getColor());
+	
+			cm.setScaleX(1);
+			cm.setScaleY(1);
+			cm.setScaleZ(1);
+			cm.setRotateX(180);;
+			cm.setTranslateY(0);
+			cm.setTranslateZ(currentCarLocation);
+			cm.setTranslateY(0);
 
-		cm.setScaleX(50);
-		cm.setScaleY(50);
-		cm.setScaleZ(50);
-		cm.setRotateX(180);;
-		cm.setTranslateY(0);
-		
-		((Xform)pane).getChildren().add(cm);
+			currentCarLocation += CAR_SPACE;
+			((Xform)pane).getChildren().add(cm);
+		}
 	}
 
 
@@ -241,7 +264,7 @@ public class RaceView extends View
 	private void buildStadium()
 	{
 		//Set Shapes
-		Box floor = new Box(10000, 1, 10000);
+		Box floor = new Box(1000, 1, 1000);
 		
 		Sphere sky = new Sphere(10000);
 		
@@ -261,10 +284,11 @@ public class RaceView extends View
 		
 		//Set Materialts
 		PhongMaterial floorMat = new PhongMaterial();
-		PhongMaterial skyMat = new PhongMaterial();
-		PhongMaterial wallMat = new PhongMaterial();
+		PhongMaterial skyMat   = new PhongMaterial();
+		PhongMaterial wallMat  = new PhongMaterial();
 		
 		floorMat.setDiffuseMap(floorImg);
+		
 		skyMat.setDiffuseMap(skyImg);
 		wallMat.setDiffuseMap(wallImg);
 		

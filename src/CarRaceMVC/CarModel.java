@@ -14,6 +14,8 @@ import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Shape;
+import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
 import JavaFX_3D.Xform;
@@ -65,7 +67,7 @@ public class CarModel extends Xform
 		setTextures();
 		initCarParam();
 		buildCar();
-
+		this.setRotateY(90);
 	}
 
 	private void setTextures() {
@@ -107,7 +109,7 @@ public class CarModel extends Xform
 			break;		
 			
 		case JEEP:
-			roofHeight		= 2.5f;
+			roofHeight		= 2.f;
 			roofWidth 		= 3f;
 			roofLength 		= 6f;
 			bodyWidth 		= 4f;
@@ -418,14 +420,14 @@ public class CarModel extends Xform
 		// =============================  Wheels  ============================= //
 				ArrayList<Wheel> wheels  = new ArrayList<>();
 				
-				wheels.add (new Wheel(wheelDiameter/2, wheelWidth));
-				wheels.add (new Wheel(wheelDiameter/2, wheelWidth));
-				wheels.add (new Wheel(wheelDiameter/2, wheelWidth));
-				wheels.add (new Wheel(wheelDiameter/2, wheelWidth));
+				wheels.add (new Wheel(wheelDiameter/2, wheelWidth,true));
+				wheels.add (new Wheel(wheelDiameter/2, wheelWidth,false));
+				wheels.add (new Wheel(wheelDiameter/2, wheelWidth,true));
+				wheels.add (new Wheel(wheelDiameter/2, wheelWidth,false));
 				
 				
 				
-				//Set Wheel rotation
+				//Set Wheel rotation TODO:: Sometime one wheel stops
 				rotateTimer = new Timer();
 				rotateTimer.scheduleAtFixedRate(new TimerTask() {
 					
@@ -494,18 +496,9 @@ public class CarModel extends Xform
 		//add the components to the group
 		for (MeshView mv : meshViewMap.values())
 		{
-//			mv.setCullFace(CullFace.NONE);
 			mv.setDrawMode(DrawMode.FILL);
-			mv.setMouseTransparent(false);
-			mv.setOpacity(1);
 			
-			PhongMaterial m = new PhongMaterial();
-			
-			m.setDiffuseColor(carColor);
-			m.setSpecularColor(carColor);
-			
-			mv.setMaterial(m);
-			
+			setTexColor(mv, carColor, "");
 			this.getChildren().add(mv);	
 		}
 		
@@ -514,6 +507,18 @@ public class CarModel extends Xform
 		{
 			this.getChildren().add(w);
 		}
+		
 		this.getChildren().addAll(frontCylinder, rearCylinder);
+		
 	}
+	
+	private void setTexColor(Shape3D shape, Color c, String imagePath )
+	{
+		PhongMaterial pm = new PhongMaterial();
+		pm.setDiffuseColor(c);
+		pm.setSpecularColor(c);
+		shape.setMaterial(pm);
+	}
+	
+	
 }

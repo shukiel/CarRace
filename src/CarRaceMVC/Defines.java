@@ -4,7 +4,7 @@ public interface Defines
 	enum eventType		{RADIUS, COLOR, SPEED}
 	enum size			{MINI, REGULAR, LARGE}
 	enum carType		{SALOON, SPORT, JEEP}
-	enum manufacture	{JAGUAR, NISSAN, KIA, SUSITA}
+	enum manufacture	{JAGUAR, NISSAN, MERC, SUSITA}
 	
 	public static final int SIGNUP 				= 0 ;
 	public static final int SIGNIN 				= 1 ;

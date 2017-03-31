@@ -24,7 +24,7 @@ public class ClientController {
 	private boolean signUp = false;
 	private boolean bet = false;
 	private String userName;
-
+	
 	public ClientController(Stage stg) {
 
 		try {
@@ -215,7 +215,7 @@ public class ClientController {
 			windows.add(new LoginView(this));
 			break;
 		case "race":
-			windows.add(new RaceView(this));
+			windows.add(new RaceView(this, null)); //TODO:: SEND CAR LIST
 		}
 
 		windows.get(windows.size() - 1).show();
