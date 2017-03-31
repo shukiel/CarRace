@@ -9,6 +9,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -120,11 +122,14 @@ public class ServerController {
 
 		private void getAllRaceData(String[] datatemp) {
 			ResultSet rs = model.getAllData();
-			for(int i=0; i<3; i++){
+			
+			for(int i=0; i<3; i++)
+			{
 				try {
 					if(!rs.next()){
 						model.newRace();
 						i--;
+						rs = model.getAllData();
 					}
 					else{
 						String[] temp = {"",String.valueOf(rs.getInt("raceID"))};
@@ -134,9 +139,8 @@ public class ServerController {
 					e.printStackTrace();
 				}
 				try {
-					Thread.sleep(2500);
+					Thread.sleep(800);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -151,6 +155,19 @@ public class ServerController {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			boolean start = model.isCanStart(datatemp[2]);
+			if(start)
+			{
+				Timer t = new Timer();
+				t.schedule(new TimerTask(){
+					@Override
+					public void run() {
+						parseRaceData(new String[]{"",datatemp[2]});
+					}
+					
+				}, 30000);
+			}
+				
 		}
 
 		private void signUp(String[] datatemp) {
@@ -188,7 +205,10 @@ public class ServerController {
 			data = Defines.GET_RACE_DATA + ",";
 			try {
 				if (!rs.next())
+				{
+					System.out.println("EMPTY RESULT SET!");
 					return;
+				}
 				data += rs.getInt(1) + ",";
 				if (rs.getTime(2) != null)
 					data += rs.getTime(2).toString();
@@ -204,14 +224,17 @@ public class ServerController {
 				e.printStackTrace();
 				System.out.println("INVALID RESULT SET IN " + this.getName());
 			}
+			
 			data = data.substring(0, data.length() - 1);
 
 			try {
+				Thread.sleep(100);
+				System.out.println("In server before send data is :: " + data);
 				outputStreams.get(socket).writeUTF(data);
-			} catch (IOException e) {
+			} catch (IOException | InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			} 
 		}
 	}
 	// ------------------------------------------------------------------------------------//

@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javafx.scene.paint.Color;
 
@@ -15,6 +17,7 @@ public class Model {
 	private int raceCounter;
 	private static int carCounter;
 	private Connection connection;
+	private boolean isRunningRace = false;
 
 	public Model() {
 		initializeDB();
@@ -33,7 +36,8 @@ public class Model {
 			Statement s = connection.createStatement();
 			s.execute("INSERT INTO RACE (raceID, startTime, songID) VALUES (" + String.format("%d,NULL,%d", raceCounter,r.nextInt(3))+")");
 			for (int i=0 ; i < 5 ; ++i)
-				s.execute("INSERT INTO CARS (carID,color,speed,model,size,manufacture,raceID) VALUES (" + String.format("%d,1,%d,%d,%d,%d,%d",++carCounter,r.nextInt(150) + 50 ,r.nextInt(3), r.nextInt(3), r.nextInt(4), raceCounter)+")");
+				s.execute("INSERT INTO CARS (carID,color,speed,model,size,manufacture,raceID) VALUES (" +
+			String.format("%d,%d,%d,%d,%d,%d,%d",++carCounter,r.nextInt(3),r.nextInt(150) + 50 ,r.nextInt(2), r.nextInt(2), r.nextInt(3), raceCounter)+")");
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -44,6 +48,11 @@ public class Model {
 	public void endRace()
 	{
 		/*TODO:: send to database*/
+	}
+	
+	public boolean isRunning()
+	{
+		return isRunningRace;
 	}
 	
 	public ResultSet getAllData()
@@ -62,6 +71,7 @@ public class Model {
 	
 	public ResultSet getRaceData(int racenum)
 	{
+		System.out.println("In getRaceData :: racenum = " + racenum);
 		String query ="SELECT r.*, c.* FROM RACE r JOIN CARS c ON c.raceID = r.raceID where r.raceID = " + racenum;
 		try {
 		Statement s =  connection.createStatement();
@@ -172,6 +182,57 @@ public class Model {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public boolean isCanStart(String string) {
+		Statement s;
+		try {
+			int i=0;
+			s = connection.createStatement();
+			int carID = Integer.parseInt(string);
+			int raceNum = carID/5;
+			ResultSet rs = s.executeQuery("SELECT * FROM BETS WHERE carID BETWEEN " + raceNum * 5 + " AND " + raceNum + 4);
+			while(rs.next())
+				i++;
+			if(i>=3)
+			{
+				startRace(raceNum);
+				return true;
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+
+	private void startRace(int raceNum) {
+		isRunningRace = true;
+		Timer t = new Timer();
+		t.schedule(new TimerTask(){
+			@Override
+			public void run() 
+			{
+				updateSpeed(raceNum);
+			}
+			
+		}, 30000);
+	}
+
+	protected void updateSpeed(int raceNum) {
+		Random R = new Random();
+		try {
+			Statement s = connection.createStatement();
+			for(int i = raceNum*5; i < raceNum*5+5; i++)
+			{
+				s.execute("UPDATE CARS speed = " + R.nextInt(150)+50 + " WHERE carID = " + i);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 }
 
