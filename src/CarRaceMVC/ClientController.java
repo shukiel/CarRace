@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 import sun.security.jca.GetInstance;
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.Stage;
@@ -43,8 +44,7 @@ public class ClientController {
 
 	public void start() {
 		System.out.println("START AT CLIENT");
-		//createNewWindow("Login");
-		createNewWindow("Race");
+		createNewWindow("Login");
 	}
 
 	public void run() {
@@ -90,7 +90,9 @@ public class ClientController {
 	}
 
 	private void readData(String[] data) {
-		createNewWindow("Race");
+		Platform.runLater(() -> {
+			createNewWindow("Race");
+		});
 	}
 
 	private void setBet(boolean parseBoolean) {

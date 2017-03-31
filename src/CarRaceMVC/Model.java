@@ -31,9 +31,9 @@ public class Model {
 		Random r = new Random();
 		try {
 			Statement s = connection.createStatement();
-			s.execute("INSERT INTO RACE (raceID, startTime, songID) VALUES (" + String.format("%d,NULL,%d", raceCounter,r.nextInt(3)));
+			s.execute("INSERT INTO RACE (raceID, startTime, songID) VALUES (" + String.format("%d,NULL,%d", raceCounter,r.nextInt(3))+")");
 			for (int i=0 ; i < 5 ; ++i)
-				s.execute("INSERT INTO CARS (carID,color,speed,model,size,manufacture,raceID) VALUES (" + String.format("%d,1,%d,%d,%d,%d,%d",carCounter++,r.nextInt(150) + 50 ,r.nextInt(3), r.nextInt(3), r.nextInt(4)));
+				s.execute("INSERT INTO CARS (carID,color,speed,model,size,manufacture,raceID) VALUES (" + String.format("%d,1,%d,%d,%d,%d,%d",++carCounter,r.nextInt(150) + 50 ,r.nextInt(3), r.nextInt(3), r.nextInt(4), raceCounter)+")");
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -48,7 +48,7 @@ public class Model {
 	
 	public ResultSet getAllData()
 	{
-		String query ="SELECT r.raceID FROM RACE WHERE startTime IS NULL";
+		String query ="SELECT raceID FROM RACE WHERE startTime IS NULL";
 		try {
 		Statement s =  connection.createStatement();
 		return  s.executeQuery(query);
@@ -97,12 +97,12 @@ public class Model {
 			if(!rs.next())
 				raceCounter = 0;
 			else
-				raceCounter = rs.getInt(0);
+				raceCounter = rs.getInt(1);
 			rs = s.executeQuery("SELECT MAX(carID) FROM CARS");
 			if(!rs.next())
 				carCounter = 0;
 			else
-				carCounter = rs.getInt(0);
+				carCounter = rs.getInt(1);
 		} catch (SQLException e) {
 			raceCounter = 0;
 			carCounter = 0;
@@ -152,6 +152,27 @@ public class Model {
 		}
 		return true;
 	}
+
+	public ResultSet SystemEarnings() {
+		try {
+			return connection.createStatement().executeQuery("");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	
+		
+	}
+
+	public ResultSet RaceHistory() {
+		try {
+			return connection.createStatement().executeQuery("SELECT r.*, c.*, b.userName, b.bet FROM RACE r JOIN CARS c ON r.raceID = c.raceID JOIN BETS b ON b.carID = c.carID");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 }
 
 
@@ -164,7 +185,7 @@ DROP DATABASE car_race;
 CREATE DATABASE car_race;
 USE car_race;
 CREATE TABLE RACE (raceID int PRIMARY KEY, startTime DATETIME, songID INT NOT NULL );
-CREATE TABLE CARS (carID INT PRIMARY KEY, color INT NOT NULL, speed INT , model INT NOT NULL, size INT NOT NULL, manufacture INT NOT NULL, raceID int);
+CREATE TABLE CARS (carID INT PRIMARY KEY, color INT NOT NULL, speed INT , model INT NOT NULL, size INT NOT NULL, manufacture INT NOT NULL, raceID int, isWinner BOOLEAN DEFAULT 0);
 ALTER TABLE CARS
 ADD FOREIGN KEY (raceID) REFERENCES RACE (raceID) ;
 CREATE TABLE USER (userName NVARCHAR(100) PRIMARY KEY, password NVARCHAR(100) NOT NULL, balance INT DEFAULT 1000  );
