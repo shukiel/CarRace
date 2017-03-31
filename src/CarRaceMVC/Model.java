@@ -1,11 +1,13 @@
 package CarRaceMVC;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.JDBCType;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Timer;
@@ -144,19 +146,24 @@ public class Model {
 	
 	public boolean bet(String userName, String betAmount, int carID) {
 		Statement s;
+		System.out.println("IN BET :: " + userName + betAmount + carID);
 		try {
 			s = connection.createStatement();
 			ResultSet rs = s.executeQuery("SELECT balance FROM USER WHERE userName='" + userName + "'");
 			if(!rs.next())
 				return false;
-			int newAmount =  rs.getInt("balance") - Integer.parseInt(betAmount);
+			int newAmount = 0;
+			try{
+				newAmount =  rs.getInt("balance") - Integer.parseInt(betAmount);
+			}
+			catch(NumberFormatException e){
+				return false;
+			}
 			if(newAmount < 0)
 				return false;
-			rs = s.executeQuery("SELECT carName FROM CARS WHERE carID =" + carID +"");
-			if(!rs.next())
-				return false;
-			s.execute("UPDATE USER SET balance=" + newAmount + "WHERE userName='" + userName +"'");
-			s.execute("INSERT INTO BET (userName,carID,bet) VALUES (" + String.format("'%s',%d,%d", userName,carID,betAmount) + ")"); 
+			
+			s.execute("UPDATE USER SET balance = " + newAmount + " WHERE userName='" + userName +"'");
+			s.execute("INSERT INTO BETS (userName,carID,bet) VALUES (" + String.format("'%s',%d,%s", userName,carID,betAmount) + ")"); 
 		} catch (SQLException e) {
 			return false;
 		}
@@ -209,6 +216,12 @@ public class Model {
 
 	private void startRace(int raceNum) {
 		isRunningRace = true;
+		try {
+			connection.createStatement().execute("UPDATE RACE SET startTime = " + new java.sql.Timestamp(new java.util.Date().getTime()) + " WHERE raceID = " + raceNum);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		Timer t = new Timer();
 		t.schedule(new TimerTask(){
 			@Override

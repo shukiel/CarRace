@@ -151,9 +151,13 @@ public class ServerController {
 			try {
 				outputStreams.get(socket).flush();
 				outputStreams.get(socket).writeUTF(Defines.BET + "," + isValidBet);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} catch (IOException | NumberFormatException e2) {
+				try {
+					outputStreams.get(socket).flush();
+					outputStreams.get(socket).writeUTF(Defines.BET + "," + false);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 			boolean start = model.isCanStart(datatemp[2]);
 			if(start)
@@ -162,7 +166,7 @@ public class ServerController {
 				t.schedule(new TimerTask(){
 					@Override
 					public void run() {
-						parseRaceData(new String[]{"",datatemp[2]});
+						parseRaceData(new String[]{"" + Defines.UPDATE,datatemp[2]});
 					}
 					
 				}, 30000);
@@ -202,7 +206,10 @@ public class ServerController {
 			String data;
 			int raceNum = Integer.parseInt(datatemp[1]);
 			ResultSet rs = model.getRaceData(raceNum);
-			data = Defines.GET_RACE_DATA + ",";
+			if(datatemp[0] == Defines.UPDATE + "")
+				data = Defines.UPDATE + ",";
+			else
+				data = Defines.GET_RACE_DATA + ",";
 			try {
 				if (!rs.next())
 				{

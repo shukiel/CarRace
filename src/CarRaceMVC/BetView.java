@@ -13,10 +13,12 @@ public class BetView extends View
 	private ComboBox<String> cb;
 	private TextField tf;
 	private Button btn;
+	private int raceNum;
 	
-	public BetView(ClientController cont, String[] carNames, String title) {
+	public BetView(ClientController cont, String[] carNames, String title, int raceNum) {
 		super(cont);
 		
+		this.raceNum = raceNum;
 		setW(600);
 		setH(200);
 		
@@ -27,6 +29,16 @@ public class BetView extends View
 		cb = new ComboBox<>();
 		tf= new TextField("Bet Amount");
 		btn = new Button("Bet!!!");
+		
+		btn.setOnAction((e)->{
+			String bet = tf.getText();
+			if (! bet.matches("\\d+"))
+			{
+				tf.setText("");
+				return;
+			}
+			cont.bet(bet, Integer.toString(cb.getSelectionModel().getSelectedIndex()),raceNum ,this);
+		});
 		
 		ObservableList<String> data = FXCollections.observableArrayList();
 		data.addAll(carNames);

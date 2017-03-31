@@ -31,6 +31,7 @@ public class ClientController {
 	private String userName;
 	private ArrayList<Car> raceCars;
 	private String title;
+	private int raceNum;
 	private int songNum;
 	
 	public ClientController(Stage stg) {
@@ -102,9 +103,13 @@ public class ClientController {
 	private void readData(String[] data) {
 		raceCars.clear();
 		songNum = Integer.parseInt(data[3]);
-		DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-		Date date = new Date();
-		title = "Race #" + data[1] + " Created at " + dateFormat.format(date);
+		raceNum = Integer.parseInt(data[1]);
+		title = "Race #" + raceNum;
+		if(data[2] == "0")
+			title += "Not started Yet";
+		else
+			title+= "Started at " + data[2];
+		System.out.println(title);
 		for(int i = 0; i< 5; i++)
 		{
 			int id = Integer.parseInt(data[i*6+4]);
@@ -115,6 +120,7 @@ public class ClientController {
 			int manufacture = Integer.parseInt(data[i*6+9]);
 			raceCars.add(new Car(id,model,null,Color.RED,size,speed,manufacture));
 		}
+		
 		System.out.println("OpenWindow::In ClientController");
 		
 		Platform.runLater(() -> {
@@ -138,9 +144,9 @@ public class ClientController {
 		waitForResponseLogin = false;
 	}
 
-	private void bet(String bet, String carName,View race) {
+	public void bet(String bet, String carName,int raceNum, View race) {
 		try {
-			dataOutput.writeUTF(Defines.BET + "," + userName + "," + bet + "," + carName);
+			dataOutput.writeUTF(Defines.BET + "," + userName + "," + bet + "," + (Integer.parseInt(carName) + 1 + (raceNum-1)*5));
 		} catch (IOException ex) {
 			System.err.println(ex);
 		}
@@ -244,8 +250,7 @@ public class ClientController {
 			windows.add(new LoginView(this));
 			break;
 		case "race":
-
-			windows.add(new RaceView(this,title,songNum,raceCars));
+			windows.add(new RaceView(this,title,songNum,(ArrayList<Car>)raceCars.clone(),raceNum));
 		}
 		
 		windows.get(windows.size() - 1).show();
