@@ -3,6 +3,7 @@ package CarRaceMVC;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.media.jfxmedia.MediaPlayer;
 import com.sun.prism.paint.Color;
 
 public interface Defines
@@ -11,6 +12,8 @@ public interface Defines
 	enum size				{MINI, REGULAR, LARGE}
 	enum carType			{SALOON, SPORT, JEEP}
 	enum manufacture		{JAGUAR, NISSAN, MERC, SUSITA}
+	
+	
 	
 	public static final int SIGNUP 				= 0 ;
 	public static final int SIGNIN 				= 1 ;

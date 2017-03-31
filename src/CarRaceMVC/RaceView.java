@@ -77,8 +77,8 @@ public class RaceView extends View
 		});
 
 		setTitle(title);
+		Player.playSound(song);
 		this.open();
-		this.show();
 	}
 
 	
