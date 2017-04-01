@@ -129,6 +129,15 @@ public class ServerController {
 			int winnerCar = Integer.parseInt(datatemp[2]);
 			timers.get(raceNum).cancel();
 			model.endRace(raceNum,winnerCar);
+			model.newRace();
+			ResultSet rs = model.getAllData();
+			try {
+				rs.next();
+				parseRaceData(new String[] {"", Integer.toString(rs.getInt("raceID"))});
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
 		}
 
@@ -197,7 +206,6 @@ public class ServerController {
 				outputStreams.get(socket).flush();
 				outputStreams.get(socket).writeUTF(Defines.SIGNUP + "," + isValidSignup);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
