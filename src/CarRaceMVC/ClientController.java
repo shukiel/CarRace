@@ -161,7 +161,10 @@ public class ClientController {
 		}
 		
 		if(this.bet)
+		{
 			MessageAlert("Bet placed successfuly","Good bet",race);
+		}
+			
 		else
 			MessageAlert("Bet cannot be placed","Bad bet",race);
 	}

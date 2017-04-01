@@ -52,7 +52,9 @@ public class RaceView extends View
     private  double mouseDeltaX;
     private  double mouseDeltaY;
 
-	
+	private Lighting lighting ;
+
+
 	private Xform ThreeDPane;
 	
 	private PerspectiveCamera camera;
@@ -64,11 +66,13 @@ public class RaceView extends View
 	private ArrayList<Integer> 	raceID;
 	private ArrayList<String> 	songs;
 	private ArrayList<String> 	users;
+	private int raceNum;
 	
 
-	public RaceView(ClientController c,String title,int song, ArrayList<Car> carInfo) {
+	public RaceView(ClientController c,String title,int song, ArrayList<Car> carInfo, int raceNum) {
 		super(c);
 		this.cars = carInfo;
+		this.raceNum = raceNum;
 		prepareMe();
 		//Close the timer, if it exists
 		this.setOnCloseRequest((event) -> {
@@ -86,8 +90,8 @@ public class RaceView extends View
 	 * This method will create the pane for the view
 	 */
 	private void prepareMe() {
-		this.W = 1000;
-		this.H = 1000;
+		this.W = 600;
+		this.H = 600;
 
 		pane = new Xform();
 		ThreeDPane = new Xform();
@@ -100,38 +104,15 @@ public class RaceView extends View
 		white.setDiffuseColor(Color.RED);
 		white.setDiffuseColor(Color.DARKRED);
 		
-		//Set Lighting
-        //setLighting();
+		
 		//Stadium
-		buildStadium();
-		//CAR
-		
-		//DEBUG
-    /*
-		cars.add(new Car(0, manufacture.JAGUAR.ordinal(), null, Color.AQUAMARINE, size.REGULAR.ordinal(), 0, carType.JEEP.ordinal()));
-		cars.add(new Car(0, manufacture.MERC.ordinal(), null, Color.BLUE, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));
-		cars.add(new Car(0, manufacture.NISSAN.ordinal(), null, Color.RED, size.REGULAR.ordinal(), 0, carType.SALOON.ordinal()));
-		cars.add(new Car(0, manufacture.SUSITA.ordinal(), null, Color.GREEN, size.REGULAR.ordinal(), 0, carType.SPORT.ordinal()));		
-  */
-		
+	//	buildStadium();
+			
 		buildCars();
 	}
 
 
 
-
-	/**
-	 * 
-	 */
-	private void setLighting() {
-		Light.Distant light0 = new Light.Distant();
-        light0.setAzimuth(-400.f);
-        light0.setColor(Color.GREEN);
-		Lighting lighting = new Lighting();
-        lighting.setSurfaceScale(9.0);
-
-		lighting.setLight(light0);
-	}
 
 
 	/**
@@ -204,7 +185,13 @@ public class RaceView extends View
 			carNames[i] = Integer.toString(cars.get(i).getId()) + cars.get(i).getModel_id().toString() ;
 		}
 		
-		betView = new BetView(cont, carNames, this.getTitle());
+		betView = new BetView(cont, carNames, this.getTitle(), raceNum);
+		betView.open();
+		betView.hide();
+		scene.setOnKeyTyped((e)->{
+			if(e.getCharacter().toLowerCase().equals("b"))
+				betView.show();
+		});
 		handleMouse();
 	}	
 	
@@ -279,11 +266,10 @@ public class RaceView extends View
 	private void buildStadium()
 	{
 		//Set Shapes
-		Box floor = new Box(1000, 1000, 1000);
+		Box floor = new Box(1000, 1, 1000);
 		
-		Sphere sky = new Sphere(10000);
-		
-		Cylinder walls = new Cylinder(10000, 1000, 8);
+		Sphere sky = new Sphere(1000);
+		Cylinder walls = new Cylinder(1000,  100, 8);
 		walls.setCullFace(CullFace.NONE);
 		
 		Box wall0 = new Box(1, 100, 1000);
@@ -303,7 +289,6 @@ public class RaceView extends View
 		PhongMaterial wallMat  = new PhongMaterial();
 		
 		floorMat.setDiffuseMap(floorImg);
-		
 		skyMat.setDiffuseMap(skyImg);
 		wallMat.setDiffuseMap(wallImg);
 		
@@ -311,8 +296,12 @@ public class RaceView extends View
 		
 		floor.setMaterial(floorMat);
 		walls.setMaterial(wallMat);
+		sky.setMaterial(skyMat);
 		
 		
         ThreeDPane.getChildren().add(floor);
+        ThreeDPane.getChildren().add(walls);
+        //ThreeDPane.getChildren().add(sky);
 	}
+
 }
