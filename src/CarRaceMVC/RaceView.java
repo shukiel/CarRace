@@ -390,9 +390,6 @@ public class RaceView extends View
 		moveCar();
 		System.out.println("::::::RACE ENDED::::");
 	}
-<<<<<<< HEAD
-=======
-
 
 	public void updateSpeed(int[] newSpeeds) {
 		for(int i=0; i<5; i++)
@@ -400,5 +397,4 @@ public class RaceView extends View
 		
 	}
 
->>>>>>> a66aca411181c01623535fb3e46692fb7b3fab3e
 }
