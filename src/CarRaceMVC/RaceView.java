@@ -2,34 +2,36 @@ package CarRaceMVC;
 
 import java.util.ArrayList;
 import java.util.Timer;
-import java.util.TimerTask;
-
+import JavaFX_3D.Xform;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.DepthTest;
 import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;
-import javafx.scene.effect.BlendMode;
-import javafx.scene.effect.Light;
-import javafx.scene.paint.ImagePattern;
-import javafx.scene.paint.PhongMaterial;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Sphere;
-import javafx.scene.AmbientLight;
-import javafx.scene.DepthTest;
-import JavaFX_3D.Xform;
-import CarRaceMVC.Defines.*;
+import javafx.util.Duration;
 
 
 public class RaceView extends View
 {
+	private static final int STADIUM_HEIGHT = 50;
+	private static final int RACE_TRACK_WIDTH = 100;
+	private static final int STADIUM_WIDTH = 250;
+	private static final int STADIUM_LONG = 1000;
+	private static final int FINISH_LINE =  - STADIUM_LONG/ 2 + 50; 
+	private static final int CARS_INITIAL_X = 400;
+	private static final int INITIAL_CAMERA_X_ANGLE = -24;
+	private static final int INITIAL_CAMERA_Y_ANGLE = 255;
 	//Other Finals
 	private static final double DELTA_ROT = 0.1;
-	private static final double ZOOM_SENSTIVTY = 100.f;
+	private static final double ZOOM_SENSTIVTY = 0.01f;
 	
 	//Camera default parameters
 	private static final double CAMERA_INITIAL_DISTANCE = -200;
@@ -39,6 +41,7 @@ public class RaceView extends View
 	
 	//MISC CAR_RACE CONSTANTS
 	private static final double CAR_SPACE = 20;
+	protected static final double DELTA = 0.1;
 
 	
 	//Timer
@@ -51,9 +54,7 @@ public class RaceView extends View
     private  double mouseOldY;
     private  double mouseDeltaX;
     private  double mouseDeltaY;
-
-	private Lighting lighting ;
-
+	
 
 	private Xform ThreeDPane;
 	
@@ -63,16 +64,19 @@ public class RaceView extends View
 	private View betView;
 	
 	private ArrayList<Car> 		cars;
-	private ArrayList<Integer> 	raceID;
-	private ArrayList<String> 	songs;
-	private ArrayList<String> 	users;
+	private ArrayList<CarModel> carModels;
 	private int raceNum;
+	private int winnerCar;
+	private int songId;
 	
 
 	public RaceView(ClientController c,String title,int song, ArrayList<Car> carInfo, int raceNum) {
 		super(c);
+		winnerCar=-1;
+		this.songId = song;
 		this.cars = carInfo;
 		this.raceNum = raceNum;
+		
 		prepareMe();
 		//Close the timer, if it exists
 		this.setOnCloseRequest((event) -> {
@@ -82,10 +86,8 @@ public class RaceView extends View
 
 		setTitle(title);
 		this.open();
-		this.show();
 	}
 
-	
 	/**
 	 * This method will create the pane for the view
 	 */
@@ -104,10 +106,7 @@ public class RaceView extends View
 		white.setDiffuseColor(Color.RED);
 		white.setDiffuseColor(Color.DARKRED);
 		
-		
-		//Stadium
-	//	buildStadium();
-			
+		buildStadium();
 		buildCars();
 	}
 
@@ -120,20 +119,37 @@ public class RaceView extends View
 	 */
 	private void buildCars() {
 		double currentCarLocation = 0.f;
+		carModels = new ArrayList<>();
+
 		for (Car c : cars)
 		{
-			CarModel cm = new CarModel(c.getType(), c.getCarSize(),c.getModel_id(),c.getColor());
+			CarModel cm = new CarModel(c.getType(), c.getCarSize(),c.getModel_id(),c.getColor(),c.getId());
 	
 			cm.setScaleX(1);
 			cm.setScaleY(1);
 			cm.setScaleZ(1);
 			cm.setRotateX(180);;
 			cm.setTranslateY(0);
-			cm.setTranslateZ(currentCarLocation);
-			cm.setTranslateY(0);
+			cm.setTranslateZ(currentCarLocation - ( ( CAR_SPACE * 5 ) / 2 - 11 ) );
 
 			currentCarLocation += CAR_SPACE;
+			
+			//Move Cars to Start
+			cm.setTranslateX(CARS_INITIAL_X);
+			cm.translateXProperty().addListener(new ChangeListener<Number>() {
+
+				@Override
+				public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+					if ( Math.abs (newValue.doubleValue() - FINISH_LINE) <= DELTA)
+					{
+						System.out.println("CAR ## : " + cm.getCarId() + " Has Finished!!");
+						if(winnerCar == -1)
+							winnerCar = cm.getCarId();
+					}
+				}
+			});
 			ThreeDPane.getChildren().add(cm);
+			carModels.add(cm);
 		}
 	}
 
@@ -152,7 +168,10 @@ public class RaceView extends View
 		
 		cameraXform = new Xform();
 		cameraXform.getChildren().add(camera);
+		cameraXform.rx.setAngle(INITIAL_CAMERA_X_ANGLE);
+		cameraXform.ry.setAngle(INITIAL_CAMERA_Y_ANGLE);
 		
+		cameraXform.setTranslateX(400);
 		ThreeDPane.getChildren().add(cameraXform);
 		
 		
@@ -178,13 +197,15 @@ public class RaceView extends View
 		((Group)pane).getChildren().add(ThreeDPane);
 		scene.setFill(Color.WHITE);
 		scene.setCamera(camera);
-		String [] carNames = new String[5];
 		
+		String [] carNames = new String[5];
 		for(int i=0;i<5;i++)
 		{
 			carNames[i] = Integer.toString(cars.get(i).getId()) + cars.get(i).getModel_id().toString() ;
 		}
 		
+		
+	
 		betView = new BetView(cont, carNames, this.getTitle(), raceNum);
 		betView.open();
 		betView.hide();
@@ -193,6 +214,8 @@ public class RaceView extends View
 				betView.show();
 		});
 		handleMouse();
+		
+		startRace();
 	}	
 	
 	private void handleMouse() {
@@ -226,13 +249,20 @@ public class RaceView extends View
                    cameraXform.rx.setAngle(cameraXform.rx.getAngle() +
                        mouseDeltaY*modifier*DELTA_ROT);  // -
                 }
+                System.out.println("X :: " + cameraXform.rx.getAngle() + 
+			                		"Y :: " + cameraXform.ry.getAngle() + 
+			                		"Z :: " + cameraXform.rz.getAngle() + "\n" 
+ 
+			                		);
            }); // setOnMouseDragged
         
-        scene.setOnZoom(e-> {
-        	//System.out.println("ZOOM :: " + e.getZoomFactor());
-             cameraXform.setTranslateZ(cameraXform.getTranslateZ() + (e.getZoomFactor() - 1) * ZOOM_SENSTIVTY );
-             
-             });
+        scene.setOnScroll((e-> {
+        // 	 System.out.println("ZOOM :: " + e.getDeltaY());
+        	
+             cameraXform.setTranslateZ(cameraXform.getTranslateZ() + (e.getDeltaY() ) * ZOOM_SENSTIVTY );
+             cameraXform.setTranslateY(cameraXform.getTranslateY() + (e.getDeltaY() ) * ZOOM_SENSTIVTY );
+             cameraXform.setTranslateX(cameraXform.getTranslateX() + (e.getDeltaY() ) * ZOOM_SENSTIVTY );
+             }));
        
    } //handleMouse
 
@@ -271,44 +301,95 @@ public class RaceView extends View
 	private void buildStadium()
 	{
 		//Set Shapes
-		Box floor = new Box(1000, 1, 1000);
+		Box floor = new Box(STADIUM_LONG, 1, STADIUM_WIDTH);
+		Box raceTrack = new Box(STADIUM_LONG,1,RACE_TRACK_WIDTH);
 		
-		Sphere sky = new Sphere(1000);
-		Cylinder walls = new Cylinder(1000,  100, 8);
-		walls.setCullFace(CullFace.NONE);
+		Box sky = new Box(STADIUM_LONG,1,STADIUM_LONG);
 		
-		Box wall0 = new Box(1, 100, 1000);
-		Box wall1 = new Box(1, 100, 1000);
-		Box wall2 = new Box(1000, 100, 1);
-		Box wall3 = new Box(1000, 100, 1);
+		Box wall0 = new Box(1, STADIUM_HEIGHT, STADIUM_WIDTH);
+		Box wall1 = new Box(1, STADIUM_HEIGHT, STADIUM_WIDTH);
+		Box wall2 = new Box(STADIUM_LONG, 50, 1);
+		Box wall3 = new Box(STADIUM_LONG, 50, 1);
 		
+		//move walls
 		
 		//Set Images
 		Image floorImg 	= new Image("file:grass.jpg");
 		Image skyImg 	= new Image("file:sky.jpg");
 		Image wallImg	= new Image("file:wall.jpg");
+		Image raceTrackImg = new Image("file:track.jpg");
 		
 		//Set Materialts
 		PhongMaterial floorMat = new PhongMaterial();
 		PhongMaterial skyMat   = new PhongMaterial();
 		PhongMaterial wallMat  = new PhongMaterial();
+		PhongMaterial raceTrackMat  = new PhongMaterial();
+
 		
 		floorMat.setDiffuseMap(floorImg);
+		raceTrackMat.setDiffuseMap(raceTrackImg);
 		skyMat.setDiffuseMap(skyImg);
 		wallMat.setDiffuseMap(wallImg);
 		
 		//Apply Materials to the shapes
-		
 		floor.setMaterial(floorMat);
-		walls.setMaterial(wallMat);
-		sky.setMaterial(skyMat);
+		raceTrack.setMaterial(raceTrackMat);
 		
-		
-        ThreeDPane.getChildren().add(floor);
-        ThreeDPane.getChildren().add(walls);
-        //ThreeDPane.getChildren().add(sky);
-	}
+		wall0.setMaterial(wallMat);
+		wall1.setMaterial(wallMat);
+		wall2.setMaterial(wallMat);
+		wall3.setMaterial(wallMat);
 
+		sky.setMaterial(skyMat);
+		skyMat.setSpecularPower(64);
+		
+		//translate what needed 
+		raceTrack.setTranslateY(-0.1);
+		sky.setTranslateY(-50);
+		
+		wall0.setTranslateY(-STADIUM_HEIGHT/2);
+		wall1.setTranslateY(-STADIUM_HEIGHT/2);
+		wall2.setTranslateY(-STADIUM_HEIGHT/2);
+		wall3.setTranslateY(-STADIUM_HEIGHT/2);
+		
+		wall0.setTranslateX(-STADIUM_LONG/2);
+		wall1.setTranslateX(STADIUM_LONG/2);
+		
+		wall2.setTranslateZ(-STADIUM_WIDTH/2);
+		wall3.setTranslateZ(STADIUM_WIDTH/2);
+
+        ThreeDPane.getChildren().add(floor);
+        ThreeDPane.getChildren().add(raceTrack);
+        ThreeDPane.getChildren().add(wall0);
+        //ThreeDPane.getChildren().add(wall1);
+        ThreeDPane.getChildren().add(wall2);
+        ThreeDPane.getChildren().add(wall3);
+       // ThreeDPane.getChildren().add(sky);
+	}
+	
+	private void moveCar()
+	{
+		for (int i=0;i<5;i++)
+		{		
+			Timeline carPlace = new Timeline(
+									new KeyFrame(new Duration( 100000 / (cars.get(i).getSpeed())),
+															new KeyValue(carModels.get(i).translateXProperty(), FINISH_LINE)));
+			carPlace.setCycleCount(1);
+			carPlace.setAutoReverse(false);
+			carPlace.setOnFinished((e)->{
+				Player.playSound(12);
+				System.out.println("Finish in Timeline");
+			});
+			carPlace.play();
+		}
+	}
+	
+	public void startRace()
+	{
+		Player.playSound(11);
+		moveCar();
+		System.out.println("::::::RACE ENDED::::");
+	}
 
 	public void updateSpeed(int[] newSpeeds) {
 		for(int i=0; i<5; i++)
