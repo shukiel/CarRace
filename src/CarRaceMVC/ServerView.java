@@ -24,15 +24,24 @@ public class ServerView {
 		this.controller = controller;
 		srvTV = new TableView();
 		srvCB = new ComboBox<String>();
-		srvCB.getItems().addAll("Race history","System earnings","");
+		srvCB.getItems().addAll("Race history","Bet history","Race status","House winnings","Gamblers winnings");
 		srvCB.valueProperty().addListener(e ->{
 			String option = srvCB.getValue();
 					switch(option){
 					case "Race history":
 						controller.getRaceHistory(srvTV);
 						break;
-					case "System earnings":
-						controller.SystemEarnings(srvTV);
+					case "Bet history":
+						controller.betHistory(srvTV);
+						break;
+					case "Race status":
+						controller.raceStatus(srvTV);
+						break;
+					case "House winnings":
+						controller.houseWinnings(srvTV);
+						break;
+					case "Gamblers winnings":
+						controller.gamblerWinnings(srvTV);
 						break;
 			}
 		});

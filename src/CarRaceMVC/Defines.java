@@ -18,4 +18,5 @@ public interface Defines
 	public static final int GET_ALL_RACES_DATA 	= 3 ;
 	public static final int BET 				= 4 ;
 	public static final int UPDATE				= 5 ;
+	public static final int END_RACE			= 6 ;
 }
