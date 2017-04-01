@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javafx.scene.effect.Light;
+import javafx.scene.effect.Light.Spot;
+import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
@@ -32,11 +35,13 @@ public class CarModel extends Xform
 	private manufacture carManufacture;
 	private Color carColor;
 	
+	
+	
 	//Textures
-	private PhongMaterial windows;
-	private PhongMaterial roof;
-	private PhongMaterial body;
-	private PhongMaterial fender;
+	private Image logo;
+	
+	//Lighting
+	Lighting lighting;
 	
 	//3D Parameters
 	private float roofHeight;
@@ -62,15 +67,31 @@ public class CarModel extends Xform
 		this.type = ct;
 		this.carManufacture = m;
 		this.carColor = c;
+		
+
+		setLighting();
 		setTextures();
 		initCarParam();
 		buildCar();
-		System.out.println(com.sun.javafx.runtime.VersionInfo.getRuntimeVersion());
 		this.setRotateY(90);
 	}
 
 	private void setTextures() {
-		//TODO :: Make it look nicer
+		switch(carManufacture)
+		{
+		case JAGUAR:
+			logo = new Image("file:jaguar.png");
+			break;
+		case MERC:
+			logo = new Image("file:merc.png");
+			break;
+		case NISSAN:
+			logo = new Image("file:nissan.jpg");
+			break;
+		case SUSITA:
+			logo = new Image("file:johnDeer.png");
+			break;
+		}
 	}
 
 	private void initCarParam() {
@@ -451,8 +472,8 @@ public class CarModel extends Xform
 				wheels.get(3).setTranslate( bodyWidth/2 , wheelDiameter/2, -0.4f * (bodyLength/2 + hoodLength/2));
 				
 				//Create Axles
-				Cylinder frontCylinder = new Cylinder(0.5, bodyWidth);
-				Cylinder rearCylinder = new Cylinder(0.5, bodyWidth);
+				Cylinder frontCylinder = new Cylinder(0.1, bodyWidth);
+				Cylinder rearCylinder = new Cylinder(0.1, bodyWidth);
 				PhongMaterial cylinderMat = new PhongMaterial();
 				cylinderMat.setDiffuseColor(Color.BLACK);
 				cylinderMat.setSpecularColor(Color.BLACK);
@@ -487,27 +508,22 @@ public class CarModel extends Xform
 		meshViewMap.put("doorR",		 new MeshView(doorR));
 		meshViewMap.put("rearBody",		 new MeshView(rearBody));
 		
-		//Get images
-		Image frontWindowImg = new Image ("file:frontWindow.jpg");
-		
-		
-		//Set Materials
-		PhongMaterial frontWindowMat = new PhongMaterial();
-		frontWindowMat.setDiffuseMap(frontWindowImg);
-		
 
-		//Edit the specific components parameters
-		meshViewMap.get("frontWindow").setMaterial(frontWindowMat);
 		
 		//add the components to the group
 		for (MeshView mv : meshViewMap.values())
 		{
 			mv.setDrawMode(DrawMode.FILL);
-			
+			mv.setEffect(lighting);
 			setTexColor(mv, carColor, "");
 			this.getChildren().add(mv);	
 		}
 		
+		setTexColor(meshViewMap.get("frontWindow"), Color.GRAY, "");
+		setTexColor(meshViewMap.get("rearWindow"), Color.GRAY, "");
+		
+		setTexColor(meshViewMap.get("roof"), carColor, "logo");
+
 		//add the wheels to the group
 		for (Wheel w  : wheels)
 		{
@@ -519,10 +535,26 @@ public class CarModel extends Xform
 	private void setTexColor(Shape3D shape, Color c, String imagePath )
 	{
 		PhongMaterial pm = new PhongMaterial();
+		if (imagePath.equals("logo"))
+		{
+			pm.setDiffuseMap(logo);
+		}
 		pm.setDiffuseColor(c);
-		pm.setSpecularColor(c);
+		pm.setSpecularColor(c.darker());
 		shape.setMaterial(pm);
 	}
+	private void setLighting() {
+		Spot light0 = new Light.Spot();
+        light0.setX(500);
+        light0.setY(0);
+        light0.setZ(500);
+        
+        light0.setColor(Color.GREEN);
+		lighting = new Lighting();
+        lighting.setSurfaceScale(5.0);
+		lighting.setLight(light0);
+	}
+
 	
 	
 }
