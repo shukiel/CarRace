@@ -3,6 +3,8 @@ package CarRaceMVC;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javafx.scene.Group;
 import javafx.scene.PerspectiveCamera;
@@ -27,6 +29,8 @@ import CarRaceMVC.Defines.*;
 
 public class RaceView extends View
 {
+	
+	public Lock lock; 
 	//Other Finals
 	private static final double DELTA_ROT = 0.1;
 	private static final double ZOOM_SENSTIVTY = 100.f;
@@ -64,11 +68,14 @@ public class RaceView extends View
 	private ArrayList<Integer> 	raceID;
 	private ArrayList<String> 	songs;
 	private ArrayList<String> 	users;
+	private int raceNum;
 	
 
-	public RaceView(ClientController c,String title,int song, ArrayList<Car> carInfo) {
+	public RaceView(ClientController c,String title,int song, ArrayList<Car> carInfo, int raceNum)
+	{
 		super(c);
 		this.cars = carInfo;
+		this.raceNum = raceNum;
 		prepareMe();
 		//Close the timer, if it exists
 		this.setOnCloseRequest((event) -> {
@@ -77,8 +84,8 @@ public class RaceView extends View
 		});
 
 		setTitle(title);
+		Player.playSound(song);
 		this.open();
-		this.show();
 	}
 
 	
@@ -138,7 +145,9 @@ public class RaceView extends View
 	 * 
 	 */
 	private void buildCars() {
+		
 		double currentCarLocation = 0.f;
+		
 		for (Car c : cars)
 		{
 			CarModel cm = new CarModel(c.getType(), c.getCarSize(),c.getModel_id(),c.getColor());
@@ -204,7 +213,8 @@ public class RaceView extends View
 			carNames[i] = Integer.toString(cars.get(i).getId()) + cars.get(i).getModel_id().toString() ;
 		}
 		
-		betView = new BetView(cont, carNames, this.getTitle());
+		betView = new BetView(cont, carNames, "Bet :: "+ this.getTitle() , raceNum);
+		betView.open();
 		handleMouse();
 	}	
 	

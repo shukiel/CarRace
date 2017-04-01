@@ -23,9 +23,7 @@ import JavaFX_3D.Xform;
 public class CarModel extends Xform
 {
 	private double speed = 10;
-	
 	private float sizeFactor;
-	
 	private double wheelRotation=0;
 
 	// Car Params
