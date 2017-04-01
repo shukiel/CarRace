@@ -29,11 +29,15 @@ public class CarModel extends Xform
 	private float sizeFactor;
 	private double wheelRotation=0;
 
+	public int getCarId() {
+		return carId;
+	}
 	// Car Params
 	private size carSize;
 	private carType type;
 	private manufacture carManufacture;
 	private Color carColor;
+	private int carId;
 	
 	
 	
@@ -61,13 +65,13 @@ public class CarModel extends Xform
 	private Timer rotateTimer;
 	
 	
-	public CarModel(carType ct, size cs, manufacture m, Color c ){
+	public CarModel(carType ct, size cs, manufacture m, Color c ,int carId){
 		super();	
 		this.carSize = cs;
 		this.type = ct;
 		this.carManufacture = m;
 		this.carColor = c;
-		
+		this.carId = carId;
 
 		setLighting();
 		setTextures();
