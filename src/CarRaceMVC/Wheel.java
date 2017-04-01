@@ -1,12 +1,9 @@
 package CarRaceMVC;
-
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.CullFace;
 import javafx.scene.shape.Cylinder;
 import JavaFX_3D.Xform;
-
 public class Wheel extends Xform
 {
 	

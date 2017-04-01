@@ -174,7 +174,7 @@ public class ServerController {
 					e.printStackTrace();
 				}
 			}
-			boolean start = model.isCanStart(datatemp[3]);
+			boolean start = model.isCanStart(datatemp[3]);	//Race starts here in case it can
 			if(start)
 			{
 				Timer t = new Timer();

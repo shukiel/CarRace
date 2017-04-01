@@ -7,6 +7,10 @@ import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.geometry.Point3D;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Light.Spot;
 import javafx.scene.effect.Lighting;
@@ -21,6 +25,7 @@ import javafx.scene.shape.Shape;
 import javafx.scene.shape.Shape3D;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.shape.VertexFormat;
+import javafx.util.Duration;
 import JavaFX_3D.Xform;
 
 public class CarModel extends Xform
@@ -60,13 +65,15 @@ public class CarModel extends Xform
 	private float wheelDiameter;
 	private float wheelWidth;
 	private float wheelGap;
+	private ArrayList<Wheel> wheels ;
 	
-	//Timer for rotation
-	private Timer rotateTimer;
-	
+	//TimeLine for wheel rotation
+	private ArrayList<Timeline> tl;
+
 	
 	public CarModel(carType ct, size cs, manufacture m, Color c ,int carId){
 		super();	
+		tl = new ArrayList<Timeline>();
 		this.carSize = cs;
 		this.type = ct;
 		this.carManufacture = m;
@@ -84,7 +91,7 @@ public class CarModel extends Xform
 		switch(carManufacture)
 		{
 		case JAGUAR:
-			logo = new Image("file:jaguar.png");
+			logo = new Image("file:toyota.jpg");
 			break;
 		case MERC:
 			logo = new Image("file:merc.png");
@@ -169,15 +176,15 @@ public class CarModel extends Xform
 				);
 		
 		roofMesh.getTexCoords().addAll(
-				0, 0,  //  t0
-				1, 0,  //  t1
-				0, 1,  //  t2
-		        1, 1   //  t3
+				1, 0,   //  t3
+				1, 1, 	 //  t1
+				0, 0, 	 //  t0
+				0, 1  	//  t2
 				);
 		
 		roofMesh.getFaces().addAll(
 				1,1, 0,0,2,2,
-				3,3, 1,2 ,2,1
+				3,3, 1,1 ,2,2
 				);
 		
 		// =============================  Side Windows ============================= //	
@@ -442,7 +449,7 @@ public class CarModel extends Xform
 						);
 
 		// =============================  Wheels  ============================= //
-				ArrayList<Wheel> wheels  = new ArrayList<>();
+				wheels = new ArrayList<>();
 				
 				wheels.add (new Wheel(wheelDiameter/2, wheelWidth,true));
 				wheels.add (new Wheel(wheelDiameter/2, wheelWidth,false));
@@ -450,21 +457,8 @@ public class CarModel extends Xform
 				wheels.add (new Wheel(wheelDiameter/2, wheelWidth,false));
 				
 				
-				/*
-				//Set Wheel rotation TODO:: Sometime one wheel stops
-				rotateTimer = new Timer();
-				rotateTimer.scheduleAtFixedRate(new TimerTask() {
-					
-					@Override
-					public void run() {
-						for (Wheel wheel : wheels )
-						{
-							if (speed > 0)
-								wheel.setRotateY(-(wheelRotation++));
-						}
-					}
-				}, 100, (long) (100/(speed)));
-				*/
+			
+			
 				
 				
 				
@@ -526,6 +520,13 @@ public class CarModel extends Xform
 		setTexColor(meshViewMap.get("frontWindow"), Color.GRAY, "");
 		setTexColor(meshViewMap.get("rearWindow"), Color.GRAY, "");
 		
+		setTexColor(meshViewMap.get("sideWindowL"), carColor.desaturate()
+.desaturate()
+, "");
+		setTexColor(meshViewMap.get("sideWindowR"), carColor.desaturate()
+.desaturate()
+, "");
+		
 		setTexColor(meshViewMap.get("roof"), carColor, "logo");
 
 		//add the wheels to the group
@@ -542,10 +543,15 @@ public class CarModel extends Xform
 		if (imagePath.equals("logo"))
 		{
 			pm.setDiffuseMap(logo);
+			//pm.setDiffuseColor(Color.BLACK);
+			pm.setSpecularColor(Color.BLACK);
+			shape.setMaterial(pm);
+			return;
 		}
 		pm.setDiffuseColor(c);
 		pm.setSpecularColor(c.darker());
 		shape.setMaterial(pm);
+		
 	}
 	private void setLighting() {
 		Spot light0 = new Light.Spot();
@@ -559,6 +565,30 @@ public class CarModel extends Xform
 		lighting.setLight(light0);
 	}
 
+	public void rotateWheels(double speed)
+	{
+		System.out.println("StartRotate");
+		for (int i = 0 ; i< 4 ; ++i)
+	 	{
+			KeyValue kv0 = new KeyValue(wheels.get(i).ry.angleProperty(), 360);
+			KeyValue kv1 = new KeyValue(wheels.get(i).ry.angleProperty(), 0);
+			KeyFrame kf0 = new KeyFrame(Duration.ZERO, kv0);
+			KeyFrame kf1 = new KeyFrame(Duration.seconds(100/speed), kv1);
+			
+			Timeline tmp = new Timeline(kf0, kf1);
+			tmp.setCycleCount(Timeline.INDEFINITE);
+			tmp.setAutoReverse(false);
+			tmp.play();
+			tl.add(tmp);
+			
+			
+		}
+	}
 	
+	public void stopWheels()
+	{
+		for ( Timeline tmp : tl)
+			tmp.stop();
+	}
 	
 }

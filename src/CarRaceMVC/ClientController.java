@@ -154,21 +154,20 @@ public class ClientController {
 				c= Color.RED;
 				break;
 			case 1:
-				c= Color.AZURE;
+				c= Color.BLUE;
 				break;
 			case 2:
-				c= Color.CORAL;
+				c= Color.GREEN;
 				break;
 			case 3:
-				c= Color.OLIVE;
+				c= Color.YELLOW;
 				break;
 			default:
-				c = Color.BLUE;
+				c = Color.PURPLE;
 				break;
 			}
 			raceCars.add(new Car(id,model,null,c,size,speed,manufacture));
 		}
-
 		
 		Platform.runLater(() -> {
 			createNewWindow("Race");
@@ -225,9 +224,6 @@ public class ClientController {
 			alert.close();
 		});
 		alert.show();
-	}
-
-	public void setOwnerStage(Stage stg) {
 	}
 
 	public void login(String user, String pass) {

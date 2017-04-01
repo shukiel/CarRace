@@ -1,11 +1,15 @@
 package CarRaceMVC;
 
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.Timer;
+import java.util.concurrent.CountDownLatch;
+
 import JavaFX_3D.Xform;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.DepthTest;
@@ -23,7 +27,7 @@ public class RaceView extends View
 {
 	private static final int STADIUM_HEIGHT = 50;
 	private static final int RACE_TRACK_WIDTH = 100;
-	private static final int STADIUM_WIDTH = 250;
+	private static final int STADIUM_WIDTH = 500;
 	private static final int STADIUM_LONG = 1000;
 	private static final int FINISH_LINE =  - STADIUM_LONG/ 2 + 50; 
 	private static final int CARS_INITIAL_X = 400;
@@ -55,6 +59,8 @@ public class RaceView extends View
     private  double mouseDeltaX;
     private  double mouseDeltaY;
 	
+    //
+    private double leaderLocation;
 
 	private Xform ThreeDPane;
 	
@@ -68,21 +74,22 @@ public class RaceView extends View
 	private int raceNum;
 	private int winnerCar;
 	private int songId;
+	private int numOfCarsFinished;
+	private boolean isStarted;
+	
 	
 
 	public RaceView(ClientController c,String title,int song, ArrayList<Car> carInfo, int raceNum) {
 		super(c);
 		winnerCar=-1;
+		leaderLocation = STADIUM_LONG;
+		numOfCarsFinished=0;
+		isStarted = false;
 		this.songId = song;
 		this.cars = carInfo;
 		this.raceNum = raceNum;
 		
 		prepareMe();
-		//Close the timer, if it exists
-		this.setOnCloseRequest((event) -> {
-			if (rotateTimer != null )
-				rotateTimer.cancel();
-		});
 
 		setTitle(title);
 		this.open();
@@ -139,12 +146,31 @@ public class RaceView extends View
 			cm.translateXProperty().addListener(new ChangeListener<Number>() {
 
 				@Override
-				public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) 
+				{
+					//System.out.println(cm.getCarId() + "  " + newValue.doubleValue());
+					if ( newValue.doubleValue()  < leaderLocation )
+					{
+						cameraXform.setTranslateX(newValue.doubleValue());
+					 	leaderLocation = newValue.doubleValue();
+					}
+					
 					if ( Math.abs (newValue.doubleValue() - FINISH_LINE) <= DELTA)
 					{
 						System.out.println("CAR ## : " + cm.getCarId() + " Has Finished!!");
+						cm.stopWheels();
+						numOfCarsFinished++;
 						if(winnerCar == -1)
+						{
 							winnerCar = cm.getCarId();
+							//TODO:: Nir :: this is the place where the first car finished the race... Do what you need here
+						}
+						leaderLocation=STADIUM_LONG;
+						if (numOfCarsFinished == 5)
+						{
+							System.out.println("Race IS OVER");
+							//TODO:: NIR - here all of the cars finished! The race is over
+						}
 					}
 				}
 			});
@@ -175,20 +201,6 @@ public class RaceView extends View
 		ThreeDPane.getChildren().add(cameraXform);
 		
 		
-		/*
-		//Add rotation to the camera
-		
-		rotateTimer = new Timer();
-		rotateTimer.scheduleAtFixedRate(new TimerTask() {
-			
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-				cameraXform.rz.setAngle(cameraXform.rz.getAngle() + DELTA_ROT);
-			//	camera.setRotate(cameraXform.rz.getAngle() + DELTA_ROT);
-			}
-		}, 100, 10);
-		*/
 	}
 	
 	public void open()
@@ -214,8 +226,6 @@ public class RaceView extends View
 				betView.show();
 		});
 		handleMouse();
-		
-		startRace();
 	}	
 	
 	private void handleMouse() {
@@ -249,11 +259,13 @@ public class RaceView extends View
                    cameraXform.rx.setAngle(cameraXform.rx.getAngle() +
                        mouseDeltaY*modifier*DELTA_ROT);  // -
                 }
+                /*	::DEBUG::
                 System.out.println("X :: " + cameraXform.rx.getAngle() + 
 			                		"Y :: " + cameraXform.ry.getAngle() + 
 			                		"Z :: " + cameraXform.rz.getAngle() + "\n" 
  
 			                		);
+			                	*/
            }); // setOnMouseDragged
         
         scene.setOnScroll((e-> {
@@ -369,17 +381,26 @@ public class RaceView extends View
 	
 	private void moveCar()
 	{
-		for (int i=0;i<5;i++)
-		{		
-			Timeline carPlace = new Timeline(
-									new KeyFrame(new Duration( 100000 / (cars.get(i).getSpeed())),
+		for ( int i=0 ; i<5 ; i++ )
+		{	
+			carModels.get(i).rotateWheels(cars.get(i).getSpeed());
+			
+			Timeline carPlace = new Timeline(//TODO NIR - Try to see what is the correct number to replace this magic number
+									new KeyFrame(new Duration( 10000000 / (cars.get(i).getSpeed())),
 															new KeyValue(carModels.get(i).translateXProperty(), FINISH_LINE)));
 			carPlace.setCycleCount(1);
 			carPlace.setAutoReverse(false);
 			carPlace.setOnFinished((e)->{
-				Player.playSound(12);
+				Thread play  = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						Player.playSound(12);
+					}
+				});
+				play.start();
 				System.out.println("Finish in Timeline");
 			});
+			
 			carPlace.play();
 		}
 	}
@@ -387,13 +408,40 @@ public class RaceView extends View
 	public void startRace()
 	{
 		Player.playSound(11);
-		moveCar();
-		System.out.println("::::::RACE ENDED::::");
+		
+		Thread th = new Thread(new Runnable(){
+
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(3800);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				Player.playSoundWithActionOnEnd(songId, ()->{
+					//TODO:: NIR in here the song ends and you can add an action on it if you like... I close the window, you can change it
+					close();
+				});
+				
+				moveCar();
+			}
+		});
+		th.start();
+		
 	}
 
+	
 	public void updateSpeed(int[] newSpeeds) {
-		for(int i=0; i<5; i++)
+		if (!isStarted)
+		{
+			startRace();
+			isStarted = true;
+		}
+		
+		for(int i=0; i<5; i++){
 			cars.get(i).setSpeed(newSpeeds[i]);
+		}
 		
 	}
 
