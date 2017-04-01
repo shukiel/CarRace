@@ -31,6 +31,7 @@ public class ServerController {
 	private Model model;
 	private static int raceNum;
 	private String data;
+	private HashMap<Integer,Timer> timers = new HashMap<Integer,Timer>();
 
 	public ServerController(Stage stage) {
 		raceNum = 0;
@@ -115,34 +116,48 @@ public class ServerController {
 					case Defines.GET_ALL_RACES_DATA:
 						getAllRaceData(datatemp);
 						break;
+					case Defines.END_RACE:
+						endRace(datatemp);
+						break;
 				}
 			}
 		
 		}
 
+		private void endRace(String[] datatemp) {
+			int raceNum = Integer.parseInt(datatemp[1]);
+			int winnerCar = Integer.parseInt(datatemp[2]);
+			timers.get(raceNum).cancel();
+			model.endRace(raceNum,winnerCar);
+			
+		}
+
 		private void getAllRaceData(String[] datatemp) {
 			ResultSet rs = model.getAllData();
-			
-			for(int i=0; i<3; i++)
-			{
-				try {
-					if(!rs.next()){
-						model.newRace();
-						i--;
-						rs = model.getAllData();
+			int i=0;
+			try {
+				while(rs.next())
+					i++;
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			for(; i<3; i++)
+				model.newRace();
+			rs = model.getAllData();
+			try {
+				rs.next();
+				for(i=0; i<3; i++)
+				{
+					parseRaceData(new String[] {"", Integer.toString(rs.getInt("raceID"))});
+					rs.next();
+					try {
+						Thread.sleep(600);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
 					}
-					else{
-						String[] temp = {"",String.valueOf(rs.getInt("raceID"))};
-						parseRaceData(temp);
-					}
-				} catch (SQLException e) {
-					e.printStackTrace();
 				}
-				try {
-					Thread.sleep(800);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
 		}
 
@@ -159,17 +174,19 @@ public class ServerController {
 					e.printStackTrace();
 				}
 			}
-			boolean start = model.isCanStart(datatemp[2]);
+			boolean start = model.isCanStart(datatemp[3]);
 			if(start)
 			{
 				Timer t = new Timer();
-				t.schedule(new TimerTask(){
+				t.scheduleAtFixedRate(new TimerTask(){
 					@Override
 					public void run() {
-						parseRaceData(new String[]{"" + Defines.UPDATE,datatemp[2]});
+						parseRaceData(new String[]{"" + Defines.UPDATE,Integer.toString(Integer.parseInt(datatemp[3]) / 5 + 1)});
+						System.out.println("Controller sent updated data");
 					}
 					
-				}, 30000);
+				},0, 30000);
+				timers.put(Integer.parseInt(datatemp[3]) / 5 + 1, t);
 			}
 				
 		}
@@ -312,4 +329,45 @@ public class ServerController {
 			System.out.println("Error on Building Data");
 		}
 	}
+
+		public void betHistory(TableView tv) {
+			ResultSet rs = model.betHistory();
+			ObservableList<ObservableList> data = FXCollections.observableArrayList();
+			try {
+				populateTableView(rs, tv);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+
+		public void houseWinnings(TableView tv) {
+			ResultSet rs = model.houseWinnings();
+			ObservableList<ObservableList> data = FXCollections.observableArrayList();
+			try {
+				populateTableView(rs, tv);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
+		public void raceStatus(TableView tv) {
+			ResultSet rs = model.raceStatus();
+			ObservableList<ObservableList> data = FXCollections.observableArrayList();
+			try {
+				populateTableView(rs, tv);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
+		public void gamblerWinnings(TableView tv) {
+			ResultSet rs = model.gamblerWinnings();
+			ObservableList<ObservableList> data = FXCollections.observableArrayList();
+			try {
+				populateTableView(rs, tv);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
 }

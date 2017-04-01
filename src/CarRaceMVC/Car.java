@@ -70,7 +70,6 @@ public class Car implements Defines {
 	}
 	public void setSpeed(double speed) {
 		this.speed = speed;
-		processEvent(eventType.SPEED, new ActionEvent());
 	}
 
 	public synchronized void addEventHandler(EventHandler<Event> l, eventType et) {

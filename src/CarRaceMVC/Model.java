@@ -8,7 +8,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -20,10 +23,12 @@ public class Model {
 	private static int carCounter;
 	private Connection connection;
 	private boolean isRunningRace = false;
+	private Map<Integer,Timer> timers;
 
 	public Model() {
 		initializeDB();
 		initializeCounters();
+		timers = new HashMap<Integer,Timer>();
 	}
 
 	public int getRaceCounter() {
@@ -39,7 +44,7 @@ public class Model {
 			s.execute("INSERT INTO RACE (raceID, startTime, songID) VALUES (" + String.format("%d,NULL,%d", raceCounter,r.nextInt(3))+")");
 			for (int i=0 ; i < 5 ; ++i)
 				s.execute("INSERT INTO CARS (carID,color,speed,model,size,manufacture,raceID) VALUES (" +
-			String.format("%d,%d,%d,%d,%d,%d,%d",++carCounter,r.nextInt(3),r.nextInt(150) + 50 ,r.nextInt(2), r.nextInt(2), r.nextInt(3), raceCounter)+")");
+			String.format("%d,%d,%d,%d,%d,%d,%d",++carCounter,r.nextInt(3), (r.nextInt(150) + 50) ,r.nextInt(2), r.nextInt(2), r.nextInt(3), raceCounter)+")");
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();
@@ -47,9 +52,24 @@ public class Model {
 		
 	}
 	
-	public void endRace()
+	public void endRace(int raceNum, int winnerCar)
 	{
-		/*TODO:: send to database*/
+		timers.get(raceNum).cancel();
+		try {
+			Statement s = connection.createStatement();
+			ResultSet rs = s.executeQuery("SELECT userName,bet,sum(bet) FROM BETS WHERE carID = " + winnerCar);
+			while(rs.next())
+			{
+				String userName = rs.getString("userName");
+				int bet = rs.getInt("bet");
+				int total = rs.getInt("sum(bet)");
+				s.execute("INSERT INTO WINNINGS VALUES('" + userName + "', " + (bet * (1 + (bet/total))) + ", " + raceNum +")");
+			}
+			s.execute("UPDATE CARS SET isWinner = true WHERE carID = " + winnerCar);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public boolean isRunning()
@@ -146,7 +166,7 @@ public class Model {
 	
 	public boolean bet(String userName, String betAmount, int carID) {
 		Statement s;
-		System.out.println("IN BET :: " + userName + betAmount + carID);
+		int commition = (int)(Integer.parseInt(betAmount)*0.05);
 		try {
 			s = connection.createStatement();
 			ResultSet rs = s.executeQuery("SELECT balance FROM USER WHERE userName='" + userName + "'");
@@ -159,9 +179,16 @@ public class Model {
 			catch(NumberFormatException e){
 				return false;
 			}
+			rs = s.executeQuery("SELECT startTime FROM RACE WHERE raceID = " + (carID/5 + 1));
+			rs.next();
+			System.out.println(rs.getTime("startTime"));
+			if(rs.getTime("startTime") != null)
+				return false;
 			if(newAmount < 0)
 				return false;
-			
+			s.execute("UPDATE WINNINGS SET amount = amount - " + betAmount + " WHERE userName = '" + userName + "'");
+			betAmount = Integer.toString(Integer.parseInt(betAmount) - commition);
+			s.execute("UPDATE COMMITION SET commition = commition + " + commition + " WHERE userName= '" + userName +"'");
 			s.execute("UPDATE USER SET balance = " + newAmount + " WHERE userName='" + userName +"'");
 			s.execute("INSERT INTO BETS (userName,carID,bet) VALUES (" + String.format("'%s',%d,%s", userName,carID,betAmount) + ")"); 
 		} catch (SQLException e) {
@@ -197,10 +224,11 @@ public class Model {
 			int i=0;
 			s = connection.createStatement();
 			int carID = Integer.parseInt(string);
-			int raceNum = carID/5;
-			ResultSet rs = s.executeQuery("SELECT * FROM BETS WHERE carID BETWEEN " + raceNum * 5 + " AND " + raceNum + 4);
+			int raceNum = carID/5 + 1;
+			ResultSet rs = s.executeQuery("SELECT * FROM BETS WHERE carID BETWEEN " + ((raceNum-1) * 5 + 1) + " AND " + (raceNum* 5));
 			while(rs.next())
 				i++;
+			System.out.println(i);
 			if(i>=3)
 			{
 				startRace(raceNum);
@@ -217,20 +245,25 @@ public class Model {
 	private void startRace(int raceNum) {
 		isRunningRace = true;
 		try {
-			connection.createStatement().execute("UPDATE RACE SET startTime = " + new java.sql.Timestamp(new java.util.Date().getTime()) + " WHERE raceID = " + raceNum);
+			Timestamp timeStamp =  new java.sql.Timestamp(new java.util.Date().getTime());
+			System.out.println("Race " + raceNum +" started at " + timeStamp );
+			connection.createStatement().execute("UPDATE RACE SET startTime = '" + timeStamp + "' WHERE raceID = " + raceNum);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			System.out.println("Race " + raceNum +" not started" );
 		}
+		
 		Timer t = new Timer();
-		t.schedule(new TimerTask(){
+		t.scheduleAtFixedRate(new TimerTask(){
 			@Override
 			public void run() 
 			{
 				updateSpeed(raceNum);
 			}
 			
-		}, 30000);
+		}, 0, 30000);
+		timers.put(raceNum, t);
 	}
 
 	protected void updateSpeed(int raceNum) {
@@ -239,13 +272,54 @@ public class Model {
 			Statement s = connection.createStatement();
 			for(int i = raceNum*5; i < raceNum*5+5; i++)
 			{
-				s.execute("UPDATE CARS speed = " + R.nextInt(150)+50 + " WHERE carID = " + i);
+				s.execute("UPDATE CARS SET speed = " + R.nextInt(150)+50 + " WHERE carID = " + i);
+				System.out.println("Race " + raceNum + " has Updated speeds on server");
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
+	}
+
+	public ResultSet betHistory() {
+		try {
+			return connection.createStatement().executeQuery("SELECT b.*, w.* FROM BETS b JOIN WINNINGS w ON b.userName = w.userName");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public ResultSet houseWinnings() {
+		try {
+			return connection.createStatement().executeQuery("SELECT * FROM WINNINGS ORDER BY amount DESC");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public ResultSet raceStatus() {
+		try {
+			return connection.createStatement().executeQuery("SELECT r.raceID,b.* FROM RACE r,BETS b,CARS c WHERE b.carID = c.carID AND r.raceID = c.raceID");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	public ResultSet gamblerWinnings() {
+		try {
+			return connection.createStatement().executeQuery("SELECT userName,sum(amount) as total FROM WINNINGS GROUP BY userName ORDER BY total DESC");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
 
@@ -270,5 +344,14 @@ ALTER TABLE BETS
 ADD FOREIGN KEY (userName) REFERENCES USER(userName);
 ALTER TABLE BETS
 ADD FOREIGN KEY (carID) REFERENCES CARS(carID);
-
+CREATE TABLE COMMITION (userName NVARCHAR(100) PRIMARY KEY, commition INT DEFAULT 0);
+ALTER TABLE COMMITION
+ADD FOREIGN KEY (userName) REFERENCES USER(userName); 
+CREATE TABLE WINNINGS (userName NVARCHAR(100), amount INT DEFAULT 0, raceID INT);
+ALTER TABLE WINNINGS
+ADD FOREIGN KEY (userName) REFERENCES USER(userName);
+ALTER TABLE WINNINGS
+ADD FOREIGN KEY (raceID) REFERENCES RACE(raceID);
+ALTER TABLE WINNINGS
+ADD PRIMARY KEY (userName,raceID);
 */

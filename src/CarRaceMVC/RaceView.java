@@ -263,6 +263,11 @@ public class RaceView extends View
         ThreeDPane.getChildren().addAll(axisGroup);
 	}
 	
+	public int getRaceNum()
+	{
+		return raceNum;
+	}
+	
 	private void buildStadium()
 	{
 		//Set Shapes
@@ -302,6 +307,13 @@ public class RaceView extends View
         ThreeDPane.getChildren().add(floor);
         ThreeDPane.getChildren().add(walls);
         //ThreeDPane.getChildren().add(sky);
+	}
+
+
+	public void updateSpeed(int[] newSpeeds) {
+		for(int i=0; i<5; i++)
+			cars.get(i).setSpeed(newSpeeds[i]);
+		
 	}
 
 }

@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Random;
 
 import sun.security.jca.GetInstance;
 import javafx.application.Platform;
@@ -95,9 +96,37 @@ public class ClientController {
 		case Defines.GET_RACE_DATA:
 			readData(args);
 			break;
+		case Defines.UPDATE:
+			updateRace(args);
+			break;
 		}
 		// TODO This function will parse the message from the server and execute
 		// the right actions
+	}
+
+	private void updateRace(String[] data) {
+	raceNum = Integer.parseInt(data[1]);
+	title = "Race #" + raceNum + " Started at " + data[2];
+	int[] newSpeeds = new int[5];
+	for(int i =0; i<5; i++)
+		newSpeeds[i] = Integer.parseInt(data[i*6+6]);
+	Platform.runLater(() -> {
+		updateRaceWindow(newSpeeds);
+	});
+		
+	}
+
+	private void updateRaceWindow(int[] newSpeeds) {
+		System.out.println("Updating speeds at ClientController");
+		for(int i=0; i<3; i++)
+		{
+			if(((RaceView)windows.get(i)).getRaceNum() == raceNum)
+			{
+				windows.get(i).setTitle(title);
+				((RaceView)windows.get(i)).updateSpeed(newSpeeds);
+			}
+		}
+		
 	}
 
 	private void readData(String[] data) {
@@ -105,23 +134,41 @@ public class ClientController {
 		songNum = Integer.parseInt(data[3]);
 		raceNum = Integer.parseInt(data[1]);
 		title = "Race #" + raceNum;
-		if(data[2] == "0")
-			title += "Not started Yet";
+		if(data[2].equals("0"))
+			title += " not started yet";
 		else
 			title+= "Started at " + data[2];
 		System.out.println(title);
 		for(int i = 0; i< 5; i++)
 		{
+			Random R = new Random();
 			int id = Integer.parseInt(data[i*6+4]);
 			int color = Integer.parseInt(data[i*6+5]);
 			int speed = Integer.parseInt(data[i*6+6]);
 			int model = Integer.parseInt(data[i*6+7]);
 			int size = Integer.parseInt(data[i*6+8]);
 			int manufacture = Integer.parseInt(data[i*6+9]);
-			raceCars.add(new Car(id,model,null,Color.RED,size,speed,manufacture));
+			Color c;
+			switch(color){
+			case 0:
+				c= Color.RED;
+				break;
+			case 1:
+				c= Color.AZURE;
+				break;
+			case 2:
+				c= Color.CORAL;
+				break;
+			case 3:
+				c= Color.OLIVE;
+				break;
+			default:
+				c = Color.BLUE;
+				break;
+			}
+			raceCars.add(new Car(id,model,null,c,size,speed,manufacture));
 		}
-		
-		System.out.println("OpenWindow::In ClientController");
+
 		
 		Platform.runLater(() -> {
 			createNewWindow("Race");
@@ -263,5 +310,14 @@ public class ClientController {
 
 	public void removeWindow(View view) {
 		windows.remove(view);
+	}
+	
+	public void RaceEnded(int raceNum, int winner)
+	{
+		try {
+			dataOutput.writeUTF(Defines.END_RACE + "," + raceNum + "," + winner);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
